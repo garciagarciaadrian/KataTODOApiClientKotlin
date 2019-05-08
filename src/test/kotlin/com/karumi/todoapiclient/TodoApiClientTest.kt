@@ -7,6 +7,7 @@ import org.junit.Before
 import org.junit.Test
 import todoapiclient.TodoApiClient
 import todoapiclient.dto.TaskDto
+import todoapiclient.exception.ItemNotFoundError
 
 class TodoApiClientTest : MockWebServerTest() {
 
@@ -69,12 +70,11 @@ class TodoApiClientTest : MockWebServerTest() {
 
     @Test
     fun sendsGetTaskNotFound() {
-        enqueueMockResponse(400, "getTaskByIdResponse.json")
+        enqueueMockResponse(404)
 
-        val tasks = apiClient.getTaskById("1").right!!
+        val error = apiClient.getTaskById("1").left!!
 
-        assertTaskContainsExpectedValues(tasks)
-
+        assertEquals(ItemNotFoundError, error)
     }
 
 
