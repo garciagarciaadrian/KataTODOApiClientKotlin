@@ -8,6 +8,7 @@ import org.junit.Test
 import todoapiclient.TodoApiClient
 import todoapiclient.dto.TaskDto
 import todoapiclient.exception.ItemNotFoundError
+import todoapiclient.exception.UnknownApiError
 
 class TodoApiClientTest : MockWebServerTest() {
 
@@ -75,6 +76,85 @@ class TodoApiClientTest : MockWebServerTest() {
         val error = apiClient.getTaskById("1").left!!
 
         assertEquals(ItemNotFoundError, error)
+    }
+
+    @Test
+    fun sendsGetTaskByIdRequestToTheCorrectPath() {
+        enqueueMockResponse(200, "getTaskByIdResponse.json")
+
+        apiClient.getTaskById("1")
+
+        assertGetRequestSentTo("/todos/" + "1")
+    }
+
+    @Test
+    fun sendsPostTask() {
+        enqueueMockResponse(200, "addTaskResponse.json")
+        val task = TaskDto("1", "1", "delectus aut autem", false)
+
+        apiClient.addTask(task)
+
+        assertPostRequestSentTo("/todos")
+    }
+
+    @Test
+    fun sendsPostTaskWithBadRequest() {
+        enqueueMockResponse(400)
+        val task = TaskDto("1", "1", "delectus aut autem", false)
+
+        val error = apiClient.addTask(task).left!!
+
+        assertEquals(UnknownApiError(400), error)
+    }
+
+    @Test
+    fun sendsPostWithCorrectHeaders() {
+        enqueueMockResponse(200, "addTaskResponse.json")
+        val task = TaskDto("1", "1", "delectus aut autem", false)
+
+        apiClient.addTask(task)
+
+        assertRequestContainsHeader("Accept", "application/json")
+    }
+
+    @Test
+    fun sendsPostAndParseResponse() {
+        enqueueMockResponse(200, "addTaskResponse.json")
+        val task = TaskDto("1", "1", "delectus aut autem", false)
+
+        val response = apiClient.addTask(task).right!!
+
+        assertTaskContainsExpectedValues(response)
+    }
+
+    @Test
+    fun sendsDeleteToCorrectEndPoint(){
+        enqueueMockResponse(200)
+
+        val response = apiClient.deleteTaskById("1")
+
+        assertEquals(UnknownApiError(200), response)
+
+    }
+
+    @Test
+    fun sendsDeleteNotFound(){
+        enqueueMockResponse(404)
+
+        val response = apiClient.deleteTaskById("1")
+
+        assertEquals(ItemNotFoundError, response)
+
+    }
+
+    @Test
+    fun sendsDeleteWithCorrectPath(){
+        enqueueMockResponse(200)
+
+        val response = apiClient.deleteTaskById("1")
+
+        assertDeleteRequestSentTo("/todos/1")
+
     }
 
 
